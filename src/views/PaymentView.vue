@@ -1,20 +1,11 @@
 <template>
   <div>
-    <el-container style="height: 700px; border: 1px solid #eee">
-      <el-header
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 40px;
-          background-color: rgb(238, 241, 246);
-          padding: 0 20px;
-        "
-      >
+    <el-container class="page-container">
+      <el-header class="app-header">
         <span>Payments</span>
-        <div>
-          <el-button @click="handleReturn">Return</el-button>
-          <el-button type="danger" @click="handleLogout">Logout</el-button>
+        <div class="header-actions">
+          <el-button class="header-btn" @click="handleReturn">Return</el-button>
+          <el-button class="header-btn danger" @click="handleLogout">Logout</el-button>
         </div>
       </el-header>
       <el-main class="main">
@@ -128,6 +119,52 @@ export default {
 </script>
 
 <style scoped>
+.page-container {
+  min-height: 100vh;
+  background: var(--color-bg-page);
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px !important;
+  padding: 0 24px;
+  background-color: #1e293b;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.header-btn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+}
+
+.header-btn.danger {
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+}
+
+.header-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
 .payment-wrapper {
   display: flex;
   justify-content: center;

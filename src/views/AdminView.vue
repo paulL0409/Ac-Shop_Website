@@ -1,36 +1,19 @@
 <template>
   <div>
-    <el-container style="height: 700px; border: 1px solid #eee">
-      <el-header
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 40px;
-          background-color: rgb(238, 241, 246);
-          padding: 0 20px;
-        "
-      >
+    <el-container class="page-container">
+      <el-header class="app-header">
         <span>Admin</span>
-
-        <div>
-          <el-button @click="handleReturn">Return</el-button>
-          <el-button type="danger" @click="handleLogout">Logout</el-button>
+        <div class="header-actions">
+          <el-button class="header-btn" @click="handleReturn">Return</el-button>
+          <el-button class="header-btn danger" @click="handleLogout">Logout</el-button>
         </div>
       </el-header>
       <el-container>
-        <el-main style="display: flex; flex-direction: column; height: 100%">
-          <div
-            style="
-              margin-bottom: 12px;
-              display: flex;
-              gap: 10px;
-              align-items: center;
-            "
-          >
+        <el-main class="main-content">
+          <div class="toolbar">
             <el-input
               v-model="searchName"
-              placeholder="Search user name"
+              placeholder="Search username"
               style="width: 240px"
               clearable
             />
@@ -43,23 +26,30 @@
             <el-button type="primary" @click="handleSearch">Search</el-button>
             <el-button @click="handleReset">Reset</el-button>
           </div>
-          <el-table :data="tableData" style="width: 100%">
-            <el-table-column prop="username" label="User Name" width="180">
-            </el-table-column>
-            <el-table-column prop="userPassword" label="Password" width="180">
-            </el-table-column>
-            <el-table-column prop="role" label="Role"> </el-table-column>
-            <el-table-column prop="createTime" label="Created Time">
-            </el-table-column>
-            <el-table-column label="Operation">
+
+          <el-table :data="tableData" style="width: 100%" border>
+            <el-table-column prop="username" label="Username" width="180" />
+            <el-table-column prop="userPassword" label="Password" width="180" />
+            <el-table-column label="Role" width="140">
               <template #default="scope">
-                <el-button type="primary" @click="handleDelete(scope.row)"
-                  >delete</el-button
+                <el-tag
+                  :type="scope.row.role === 'ADMIN' ? 'danger' : scope.row.role === 'OWNER' ? 'warning' : 'info'"
                 >
+                  {{ scope.row.role }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createTime" label="Created Time" />
+            <el-table-column label="Operation" width="120">
+              <template #default="scope">
+                <el-button type="danger" size="small" @click="handleDelete(scope.row)">
+                  Delete
+                </el-button>
               </template>
             </el-table-column>
           </el-table>
-          <div style="margin-top: auto; display: flex; justify-content: center">
+
+          <div class="pagination-bar">
             <el-pagination
               background
               layout="total, sizes, prev, pager, next"
@@ -84,13 +74,6 @@ export default {
   data() {
     return {
       tableData: [],
-      formLabelWidth: "150px",
-      form: {
-        username: "",
-        userPassword: "",
-        role: "",
-        createTime: "",
-      },
       total: 0,
       page: 1,
       pageSize: 10,
@@ -120,52 +103,45 @@ export default {
     },
     handleDelete(row) {
       this.$confirm(
-        "This action will permanently delete this dish. Continue?",
+        "This action will permanently delete this user. Continue?",
         "Warning",
         {
           confirmButtonText: "Confirm",
-          cancelButtonText: "cancel",
+          cancelButtonText: "Cancel",
           type: "warning",
         }
       )
+        .then(() => request.delete(`/users/${row.id}`))
         .then(() => {
-          return request.delete(`/users/${row.id}`);
-        })
-        .then(() => {
-          this.$message.success("Deleted Successfully");
+          this.$message.success("Deleted successfully");
           this.loadData();
         })
         .catch(() => {
-          this.$message.info("Cancel Deletion");
+          this.$message.info("Deletion cancelled");
         });
     },
-
     handleSearch() {
       this.page = 1;
       this.loadData();
     },
-
     handleReset() {
       this.searchName = "";
-      (this.searchRole = ""), (this.page = 1);
+      this.searchRole = "";
+      this.page = 1;
       this.loadData();
     },
-
     handlePageChange(newPage) {
       this.page = newPage;
       this.loadData();
     },
-
     handleSizeChange(newSize) {
       this.pageSize = newSize;
       this.page = 1;
       this.loadData();
     },
-
     handleReturn() {
       this.$router.back();
     },
-
     handleLogout() {
       this.$confirm("Are you sure you want to logout?", "Logout", {
         confirmButtonText: "Yes",
@@ -181,3 +157,71 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.page-container {
+  min-height: 100vh;
+  background: var(--color-bg-page);
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px !important;
+  padding: 0 24px;
+  background-color: #1e293b;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.header-btn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
+}
+
+.header-btn.danger {
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+}
+
+.header-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  background: var(--color-bg-page);
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.pagination-bar {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+</style>

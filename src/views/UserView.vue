@@ -33,7 +33,7 @@
                   class="table-img"
                   alt="shop"
                 />
-                <span v-else class="no-img">—</span>
+                <img v-else src="https://placehold.co/60x60/e2e8f0/94a3b8?text=No+Image" class="table-img" alt="no image" />
               </template>
             </el-table-column>
             <el-table-column label="Operation" width="120">
