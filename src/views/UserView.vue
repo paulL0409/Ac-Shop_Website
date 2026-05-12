@@ -117,7 +117,7 @@ export default {
     handlePageChange(newPage) { this.page = newPage; this.loadData(); },
     handleSizeChange(newSize) { this.pageSize = newSize; this.page = 1; this.loadData(); },
     handleInspect(row) {
-      this.$router.push({ path: "/shop/" + row.id, query: { name: row.name } });
+      this.$router.push({ path: "/shop/" + row.id, query: { name: row.name, imageUrl: row.imageUrl || '' } });
     },
     handleViewCart() { this.$router.push("/cart"); },
     handleLogout() {

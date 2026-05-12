@@ -22,6 +22,17 @@
 
     <!-- Main -->
     <div class="main-col">
+      <!-- No shop: create shop prompt -->
+      <div v-if="noShop" class="no-shop-screen">
+        <div class="no-shop-card">
+          <div class="no-shop-icon">🏪</div>
+          <h2 class="no-shop-title">You don't have a shop yet</h2>
+          <p class="no-shop-desc">Create your shop to start managing products and selling to customers.</p>
+          <button class="btn-create-shop" @click="createShopDialogVisible = true">Create My Shop</button>
+        </div>
+      </div>
+
+      <template v-else>
       <!-- Header -->
       <header class="top-bar">
         <div class="top-bar-left">
@@ -85,10 +96,48 @@
           @size-change="handleSizeChange"
         />
       </div>
+      </template>
     </div>
 
-    <!-- Hidden file input -->
+    <!-- Create Shop Dialog -->
+    <el-dialog title="Create Your Shop" v-model="createShopDialogVisible" width="520px" :close-on-click-modal="false">
+      <p class="dialog-subtitle">Set up your shop to start selling products.</p>
+      <el-form :model="shopForm" label-width="120px" class="dialog-form">
+        <el-form-item label="Shop Name">
+          <el-input v-model="shopForm.name" placeholder="e.g. My Awesome Store" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="Category">
+          <el-input v-model="shopForm.category" placeholder="e.g. Electronics, Clothing..." autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="Description">
+          <el-input v-model="shopForm.description" placeholder="Briefly describe your shop" autocomplete="off" />
+        </el-form-item>
+        <el-form-item label="Shop Image">
+          <div
+            class="drop-zone"
+            :class="{ 'drop-zone--active': isShopDragging, 'drop-zone--uploading': shopUploading }"
+            @click="$refs.shopFileInput.click()"
+            @dragover.prevent="isShopDragging = true"
+            @dragleave.prevent="isShopDragging = false"
+            @drop.prevent="onShopDrop"
+          >
+            <img v-if="shopForm.imageUrl" :src="shopForm.imageUrl" class="drop-preview" alt="preview" />
+            <template v-else>
+              <span class="drop-icon">{{ shopUploading ? '⏳' : '📷' }}</span>
+              <span class="drop-text">{{ shopUploading ? 'Uploading...' : 'Click or drag an image here' }}</span>
+            </template>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <button class="btn-ghost" @click="createShopDialogVisible = false">Cancel</button>
+        <button class="btn-primary" :disabled="shopUploading" @click="handleCreateShop">Create Shop</button>
+      </template>
+    </el-dialog>
+
+    <!-- Hidden file inputs -->
     <input ref="fileInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
+    <input ref="shopFileInput" type="file" accept="image/*" style="display:none" @change="onShopFileChange" />
 
     <!-- Add Product Dialog -->
     <el-dialog title="Add New Product" v-model="addDialogFormVisible" width="520px">
@@ -166,6 +215,7 @@
 
 <script>
 import request from "@/utils/request";
+import { jwtDecode } from "jwt-decode";
 
 export default {
   data() {
@@ -179,18 +229,30 @@ export default {
       priceEnd: "",
       addDialogFormVisible: false,
       editDialogFormVisible: false,
+      createShopDialogVisible: false,
       uploading: false,
       isDragging: false,
+      shopUploading: false,
+      isShopDragging: false,
+      noShop: false,
       form: { shopId: null, name: "", description: "", price: "", imageUrl: null },
+      shopForm: { name: "", category: "", description: "", imageUrl: null },
       shopId: null,
       shopName: "",
     };
   },
   mounted() {
     request.get("/shops/my").then((shopRes) => {
-      this.shopId = shopRes.data.data.id;
-      this.shopName = shopRes.data.data.name;
+      const shop = shopRes.data?.data;
+      if (!shop) {
+        this.noShop = true;
+        return;
+      }
+      this.shopId = shop.id;
+      this.shopName = shop.name;
       this.loadData();
+    }).catch(() => {
+      this.noShop = true;
     });
   },
   methods: {
@@ -203,6 +265,34 @@ export default {
       this.isDragging = false;
       const file = e.dataTransfer.files[0];
       if (file) this.doUpload(file);
+    },
+    onShopFileChange(e) {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (file) this.doShopUpload(file);
+    },
+    onShopDrop(e) {
+      this.isShopDragging = false;
+      const file = e.dataTransfer.files[0];
+      if (file) this.doShopUpload(file);
+    },
+    async doShopUpload(file) {
+      if (!file.type.startsWith("image/")) { this.$message.error("Only image files are allowed"); return; }
+      if (file.size / 1024 / 1024 > 5) { this.$message.error("Image must be smaller than 5 MB"); return; }
+      this.shopUploading = true;
+      this.shopForm.imageUrl = URL.createObjectURL(file);
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await request.post("/upload/image", formData, { headers: { "Content-Type": "multipart/form-data" } });
+        this.shopForm.imageUrl = res.data.data;
+        this.$message.success("Image uploaded successfully");
+      } catch {
+        this.shopForm.imageUrl = null;
+        this.$message.error("Image upload failed. Please try again.");
+      } finally {
+        this.shopUploading = false;
+      }
     },
     async doUpload(file) {
       if (!file.type.startsWith("image/")) {
@@ -257,23 +347,53 @@ export default {
         this.loadData();
       }).catch(() => {});
     },
+    handleCreateShop() {
+      if (!this.shopForm.name) { this.$message.error("Shop name is required"); return; }
+      const decoded = jwtDecode(localStorage.getItem("token"));
+      const ownerId = decoded.id || decoded.userId || decoded.sub;
+      request.post("/shops", { ...this.shopForm, ownerId }).then(() => {
+        return request.get("/shops/my");
+      }).then((shopRes) => {
+        const shop = shopRes.data?.data;
+        if (!shop) { this.$message.error("Shop created but could not load it. Please refresh."); return; }
+        this.shopId = shop.id;
+        this.shopName = shop.name;
+        this.createShopDialogVisible = false;
+        this.noShop = false;
+        this.$message.success("Shop created! Welcome to your store.");
+        this.loadData();
+      }).catch((err) => {
+        this.$message.error(err.response?.data?.msg || "Failed to create shop. Please try again.");
+      });
+    },
     openAdd() { this.resetForm(); this.addDialogFormVisible = true; },
     handleAdd() {
+      if (!this.shopId) { this.$message.error("Shop info not loaded. Please refresh the page."); return; }
+      if (!this.form.name) { this.$message.error("Product name is required"); return; }
+      if (!this.form.price) { this.$message.error("Price is required"); return; }
       this.form.shopId = this.shopId;
+      this.form.price = Number(this.form.price);
       request.post("/products", this.form).then(() => {
         this.$message.success("Product added successfully");
         this.addDialogFormVisible = false;
         this.loadData();
         this.resetForm();
+      }).catch((err) => {
+        this.$message.error(err.response?.data?.msg || "Failed to add product. Please try again.");
       });
     },
     openUpdate(row) { this.form = { ...row }; this.editDialogFormVisible = true; },
     handleUpdate() {
+      if (!this.form.name) { this.$message.error("Product name is required"); return; }
+      if (!this.form.price) { this.$message.error("Price is required"); return; }
+      this.form.price = Number(this.form.price);
       request.put("/products", this.form).then(() => {
         this.$message.success("Product updated successfully");
         this.editDialogFormVisible = false;
         this.loadData();
         this.resetForm();
+      }).catch((err) => {
+        this.$message.error(err.response?.data?.msg || "Failed to update product. Please try again.");
       });
     },
     resetForm() {
@@ -401,6 +521,43 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── No shop screen ── */
+.no-shop-screen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-shop-card {
+  text-align: center;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 64px 48px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  max-width: 440px;
+}
+
+.no-shop-icon { font-size: 56px; margin-bottom: 16px; }
+.no-shop-title { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 10px; letter-spacing: -0.4px; }
+.no-shop-desc { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 28px; }
+
+.btn-create-shop {
+  padding: 13px 32px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.btn-create-shop:hover { background: #1e293b; }
 
 /* ── Main column ── */
 .main-col {

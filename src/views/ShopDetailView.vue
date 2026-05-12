@@ -124,6 +124,9 @@ export default {
   mounted() {
     this.shopId = this.$route.params.id;
     this.shopName = this.$route.query.name;
+    if (this.$route.query.imageUrl) {
+      this.shopData = { ...this.shopData, imageUrl: this.$route.query.imageUrl };
+    }
     this.loadShopData();
     this.loadData();
     this.loadCartCount();
@@ -272,7 +275,7 @@ export default {
   border-radius: 20px;
   overflow: hidden;
   margin-bottom: 40px;
-  min-height: 300px;
+  height: 300px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
