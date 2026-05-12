@@ -20,10 +20,6 @@
           <h1 class="section-title">Complete Your Payment</h1>
           <p class="section-desc">Your order has been placed. Enter your card details below to confirm payment.</p>
 
-          <div class="security-badges">
-            <div class="security-badge">🔒 SSL Encrypted</div>
-            <div class="security-badge">⚡ Powered by Stripe</div>
-          </div>
         </div>
 
         <!-- Right: payment card -->

@@ -85,6 +85,14 @@
         </div>
       </div>
 
+      <!-- Floating cart button -->
+      <transition name="cart-pop">
+        <button v-if="cartCount > 0" class="btn-float-cart" @click="handleViewCart">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          View Cart ({{ cartCount }})
+        </button>
+      </transition>
+
       <div v-if="total > 0" class="pagination-bar">
         <el-pagination
           background
@@ -633,4 +641,42 @@ export default {
   display: flex;
   justify-content: center;
 }
+
+/* ── Floating cart button ── */
+.btn-float-cart {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.35);
+  z-index: 200;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-float-cart:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.45);
+}
+
+.btn-float-cart svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.cart-pop-enter-active { transition: opacity 0.2s, transform 0.2s; }
+.cart-pop-leave-active { transition: opacity 0.15s, transform 0.15s; }
+.cart-pop-enter-from, .cart-pop-leave-to { opacity: 0; transform: translateY(12px); }
 </style>
