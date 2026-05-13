@@ -10,8 +10,11 @@
       <div class="sidebar-role-badge">Admin Panel</div>
       <nav class="sidebar-nav">
         <div class="nav-section">Management</div>
-        <div class="nav-item active">
+        <div :class="['nav-item', activeTab === 'users' ? 'active' : '']" @click="switchTab('users')">
           <span class="nav-icon">👥</span> Users
+        </div>
+        <div :class="['nav-item', activeTab === 'shops' ? 'active' : '']" @click="switchTab('shops')">
+          <span class="nav-icon">🏪</span> Shops
         </div>
       </nav>
     </aside>
@@ -21,8 +24,8 @@
       <!-- Header -->
       <header class="top-bar">
         <div class="top-bar-left">
-          <h1 class="page-title">User Management</h1>
-          <p class="page-subtitle">View, search, and manage all registered users.</p>
+          <h1 class="page-title">{{ activeTab === 'users' ? 'User Management' : 'Shop Management' }}</h1>
+          <p class="page-subtitle">{{ activeTab === 'users' ? 'View, search, and manage all registered users.' : 'View, search, and manage all shops.' }}</p>
         </div>
         <div class="top-bar-right">
           <button class="btn-ghost" @click="handleReturn">← Return</button>
@@ -34,49 +37,70 @@
       <div class="stat-bar">
         <div class="stat-card">
           <div class="stat-value">{{ total }}</div>
-          <div class="stat-label">Total Users</div>
+          <div class="stat-label">{{ activeTab === 'users' ? 'Total Users' : 'Total Shops' }}</div>
         </div>
       </div>
 
-      <!-- Toolbar -->
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-input
-            v-model="searchName"
-            placeholder="Search by username..."
-            style="width:220px"
-            clearable
-            @keyup.enter="handleSearch"
-          />
-          <el-select v-model="searchRole" placeholder="All roles" style="width:150px" clearable>
-            <el-option label="Admin" value="ADMIN" />
-            <el-option label="Owner" value="OWNER" />
-            <el-option label="Customer" value="CUSTOMER" />
-          </el-select>
-          <button class="btn-primary" @click="handleSearch">Search</button>
-          <button class="btn-ghost" @click="handleReset">Reset</button>
+      <!-- ── Users tab ── -->
+      <template v-if="activeTab === 'users'">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <el-input v-model="searchName" placeholder="Search by username..." style="width:220px" clearable @keyup.enter="handleSearch" />
+            <el-select v-model="searchRole" placeholder="All roles" style="width:150px" clearable>
+              <el-option label="Admin" value="ADMIN" />
+              <el-option label="Owner" value="OWNER" />
+              <el-option label="Customer" value="CUSTOMER" />
+            </el-select>
+            <button class="btn-primary" @click="handleSearch">Search</button>
+            <button class="btn-ghost" @click="handleReset">Reset</button>
+          </div>
         </div>
-      </div>
+        <div class="table-card">
+          <el-table :data="tableData" style="width:100%" :border="false">
+            <el-table-column prop="username" label="Username" min-width="160" />
+            <el-table-column label="Role" width="140">
+              <template #default="scope">
+                <span :class="['role-pill', 'role-' + scope.row.role.toLowerCase()]">{{ scope.row.role }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createTime" label="Member Since" min-width="180" />
+            <el-table-column label="Actions" width="120" align="center">
+              <template #default="scope">
+                <button class="btn-action-del" @click="handleDelete(scope.row)">Delete</button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </template>
 
-      <!-- Table -->
-      <div class="table-card">
-        <el-table :data="tableData" style="width:100%" :border="false">
-          <el-table-column prop="username" label="Username" min-width="160" />
-          <el-table-column label="Role" width="140">
-            <template #default="scope">
-              <span :class="['role-pill', 'role-' + scope.row.role.toLowerCase()]">
-                {{ scope.row.role }}
-              </span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="createTime" label="Member Since" min-width="180" />
-          <el-table-column label="Actions" width="120" align="center">
-            <template #default="scope">
-              <button class="btn-action-del" @click="handleDelete(scope.row)">Delete</button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
+      <!-- ── Shops tab ── -->
+      <template v-if="activeTab === 'shops'">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <el-input v-model="shopSearchName" placeholder="Search by shop name..." style="width:220px" clearable @keyup.enter="handleShopSearch" />
+            <button class="btn-primary" @click="handleShopSearch">Search</button>
+            <button class="btn-ghost" @click="handleShopReset">Reset</button>
+          </div>
+        </div>
+        <div class="table-card">
+          <el-table :data="shopTableData" style="width:100%" :border="false">
+            <el-table-column label="Image" width="80" align="center">
+              <template #default="scope">
+                <img v-if="scope.row.imageUrl" :src="scope.row.imageUrl" class="table-img" alt="shop" />
+                <div v-else class="table-img-placeholder" />
+              </template>
+            </el-table-column>
+            <el-table-column prop="name" label="Shop Name" min-width="160" />
+            <el-table-column prop="category" label="Category" min-width="140" />
+            <el-table-column prop="createTime" label="Created" min-width="180" />
+            <el-table-column label="Actions" width="120" align="center">
+              <template #default="scope">
+                <button class="btn-action-del" @click="handleDeleteShop(scope.row)">Delete</button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </template>
 
       <div class="pagination-bar">
         <el-pagination
@@ -100,29 +124,43 @@ import request from "@/utils/request";
 export default {
   data() {
     return {
+      activeTab: "users",
       tableData: [],
+      shopTableData: [],
       total: 0,
       page: 1,
       pageSize: 10,
       searchName: "",
       searchRole: "",
+      shopSearchName: "",
     };
   },
   mounted() {
     this.loadData();
   },
   methods: {
+    switchTab(tab) {
+      this.activeTab = tab;
+      this.page = 1;
+      this.total = 0;
+      if (tab === "users") this.loadData();
+      else this.loadShops();
+    },
     loadData() {
       request.get("/users", {
-        params: {
-          page: this.page,
-          pageSize: this.pageSize,
-          username: this.searchName || null,
-          role: this.searchRole || null,
-        },
+        params: { page: this.page, pageSize: this.pageSize, username: this.searchName || null, role: this.searchRole || null },
       }).then((response) => {
         const pageBean = response.data.data;
         this.tableData = pageBean.rows;
+        this.total = pageBean.total;
+      });
+    },
+    loadShops() {
+      request.get("/shops", {
+        params: { page: this.page, pageSize: this.pageSize, name: this.shopSearchName || null },
+      }).then((response) => {
+        const pageBean = response.data.data;
+        this.shopTableData = pageBean.rows;
         this.total = pageBean.total;
       });
     },
@@ -134,10 +172,20 @@ export default {
         this.loadData();
       }).catch(() => {});
     },
+    handleDeleteShop(row) {
+      this.$confirm(`Permanently delete shop "${row.name}"? This action cannot be undone.`, "Delete Shop", {
+        confirmButtonText: "Delete", cancelButtonText: "Cancel", type: "warning",
+      }).then(() => request.delete(`/shops/${row.id}`)).then(() => {
+        this.$message.success("Shop deleted successfully");
+        this.loadShops();
+      }).catch(() => {});
+    },
     handleSearch() { this.page = 1; this.loadData(); },
     handleReset() { this.searchName = ""; this.searchRole = ""; this.page = 1; this.loadData(); },
-    handlePageChange(newPage) { this.page = newPage; this.loadData(); },
-    handleSizeChange(newSize) { this.pageSize = newSize; this.page = 1; this.loadData(); },
+    handleShopSearch() { this.page = 1; this.loadShops(); },
+    handleShopReset() { this.shopSearchName = ""; this.page = 1; this.loadShops(); },
+    handlePageChange(newPage) { this.page = newPage; this.activeTab === "users" ? this.loadData() : this.loadShops(); },
+    handleSizeChange(newSize) { this.pageSize = newSize; this.page = 1; this.activeTab === "users" ? this.loadData() : this.loadShops(); },
     handleReturn() { this.$router.back(); },
     handleLogout() {
       this.$confirm("Are you sure you want to sign out?", "Sign Out", {
@@ -339,6 +387,23 @@ export default {
 .role-admin { background: #fee2e2; color: #dc2626; }
 .role-owner { background: #fef3c7; color: #b45309; }
 .role-customer { background: #dbeafe; color: #1d4ed8; }
+
+.table-img {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  margin: 0 auto;
+}
+
+.table-img-placeholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  margin: 0 auto;
+}
 
 .btn-action-del {
   padding: 5px 12px;
