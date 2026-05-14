@@ -132,8 +132,12 @@ export default {
   mounted() {
     this.shopId = this.$route.params.id;
     this.shopName = this.$route.query.name;
-    if (this.$route.query.imageUrl) {
-      this.shopData = { ...this.shopData, imageUrl: this.$route.query.imageUrl };
+    if (this.$route.query.imageUrl || this.$route.query.description) {
+      this.shopData = {
+        ...this.shopData,
+        imageUrl: this.$route.query.imageUrl || null,
+        description: this.$route.query.description || null,
+      };
     }
     this.loadShopData();
     this.loadData();

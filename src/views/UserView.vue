@@ -19,9 +19,8 @@
       <div class="hero-blob hero-blob-1" />
       <div class="hero-blob hero-blob-2" />
       <div class="hero-inner">
-        <p class="hero-label">Customer Dashboard</p>
         <h1 class="hero-title">Browse Shops</h1>
-        <p class="hero-sub">Select a shop to explore its products and add items to your cart.</p>
+        <p class="hero-sub">Discover unique stores across fashion, tech, lifestyle and more.</p>
         <div class="hero-search-wrap">
           <span class="hero-search-icon">🔍</span>
           <input
@@ -117,7 +116,7 @@ export default {
     handlePageChange(newPage) { this.page = newPage; this.loadData(); },
     handleSizeChange(newSize) { this.pageSize = newSize; this.page = 1; this.loadData(); },
     handleInspect(row) {
-      this.$router.push({ path: "/shop/" + row.id, query: { name: row.name, imageUrl: row.imageUrl || '' } });
+      this.$router.push({ path: "/shop/" + row.id, query: { name: row.name, imageUrl: row.imageUrl || '', description: row.description || '' } });
     },
     handleViewCart() { this.$router.push("/cart"); },
     handleLogout() {
