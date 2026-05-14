@@ -1,38 +1,95 @@
-# acShop-website
+# AC Shop — Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+A modern e-commerce web application built with Vue 3, featuring multi-role authentication (Admin, Owner, Customer), product browsing, cart management, and Stripe-powered checkout.
 
-## Recommended IDE Setup
+## Tech Stack
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+| Layer | Technology |
+|---|---|
+| Framework | Vue 3 (Options API) |
+| UI Components | Element Plus |
+| HTTP Client | Axios |
+| Routing | Vue Router 4 |
+| Payments | Stripe.js |
+| Auth | JWT (stored in localStorage) |
+| Build Tool | Vite |
+| Deployment | GitHub Actions → AWS EC2 + Nginx |
 
-## Recommended Browser Setup
+## Features
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+- **Customer** — Browse shops, search products, manage cart, checkout with Stripe
+- **Owner** — Create and manage your shop, upload products with images
+- **Admin** — Manage all users and shops with delete controls
 
-## Customize configuration
+## Getting Started
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Prerequisites
 
-## Project Setup
+- Node.js `^20.19.0` or `>=22.12.0`
+- A running instance of the [AC Shop backend](https://github.com/your-org/acShop-backend) on port `8080`
 
-```sh
+### Install & Run
+
+```bash
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
 ```
 
-### Compile and Minify for Production
+App runs at `http://localhost:7000` (proxied to backend at `localhost:8080`).
 
-```sh
+### Build for Production
+
+```bash
 npm run build
 ```
+
+Output goes to `dist/`.
+
+## Project Structure
+
+```
+src/
+├── assets/          # Static assets (logo, CSS)
+├── router/          # Vue Router configuration
+├── utils/           # Axios request instance
+└── views/
+    ├── LoginView.vue       # Auth page
+    ├── UserView.vue        # Customer: browse shops
+    ├── ShopDetailView.vue  # Customer: shop products + cart
+    ├── CartDetailView.vue  # Customer: cart review
+    ├── PaymentView.vue     # Customer: Stripe checkout
+    ├── OrdersView.vue      # Customer: order history
+    ├── OwnerView.vue       # Owner: manage products & shop
+    └── AdminView.vue       # Admin: manage users & shops
+```
+
+## Environment & Configuration
+
+The Vite dev server proxies `/api` to `http://localhost:8080`. See `vite.config.js` for the proxy setup.
+
+For production, Nginx proxies `/api/` to the backend. See `nginx.conf` for the full server config.
+
+## Deployment
+
+Pushes to `main` automatically trigger a GitHub Actions workflow that:
+
+1. Installs dependencies and builds the app
+2. rsync's `dist/` to `/usr/share/nginx/html/` on the EC2 instance
+3. Reloads Nginx
+
+### Required GitHub Secrets
+
+| Secret | Description |
+|---|---|
+| `EC2_HOST` | Public IP or hostname of the EC2 instance |
+| `EC2_USER` | SSH username (e.g. `ec2-user`) |
+| `EC2_SSH_KEY` | Private key for SSH access |
+
+## Nginx
+
+The `nginx.conf` at the repo root is the recommended server config. It handles:
+
+- Vue Router history mode (`try_files`)
+- API reverse proxy to the Spring Boot backend
+- Static asset caching (1 year)
+- `client_max_body_size 10M` for image uploads
