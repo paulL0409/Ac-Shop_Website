@@ -22,7 +22,7 @@
         <div class="hero-left">
           <p class="hero-category">{{ shopData?.category || 'Shop' }}</p>
           <h1 class="hero-name">{{ shopData?.name || shopName }}</h1>
-          <p class="hero-desc">Browse products from this shop and add items to your cart.</p>
+          <p v-if="shopData?.description" class="hero-shop-desc">{{ shopData.description }}</p>
           <div class="hero-badges">
             <span v-if="shopData?.rating" class="hero-badge">⭐ {{ shopData.rating }} rating</span>
             <span v-if="shopData?.productCount" class="hero-badge">{{ shopData.productCount }} products</span>
@@ -331,9 +331,17 @@ export default {
   letter-spacing: -1px;
 }
 
-.hero-desc {
+.hero-shop-desc {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  max-width: 320px;
+  margin-bottom: 6px;
+}
+
+.hero-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
   line-height: 1.7;
   max-width: 320px;
 }
@@ -364,7 +372,7 @@ export default {
 .hero-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .hero-img-placeholder {

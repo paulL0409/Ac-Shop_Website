@@ -364,7 +364,7 @@ export default {
 }
 
 .shop-card-img {
-  height: 200px;
+  height: 280px;
   overflow: hidden;
   background: #f1f5f9;
 }
