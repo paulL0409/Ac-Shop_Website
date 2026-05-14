@@ -336,11 +336,17 @@ export default {
 }
 
 .hero-shop-desc {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.6;
-  max-width: 320px;
-  margin-bottom: 6px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.65;
+  max-width: 340px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .hero-desc {
